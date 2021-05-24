@@ -20,6 +20,20 @@ class RestaurantController extends Controller
 {
     use ResponseHelper, DistanceHelper;
 
+    public function category(Request $request)
+    {
+        $category = DishCategory::where('id', $request->id)->first();
+
+        return $category;
+    }
+
+    public function all_categories()
+    {
+        $categories = DishCategory::all();
+
+        return $categories;
+    }
+
     public function all_cities(Request $request)
     {
         $cities = CityRestaurant::all();

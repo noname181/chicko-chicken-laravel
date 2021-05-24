@@ -2,36 +2,31 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-
-use Razorpay\Api\Api;
-use App\Traits\ResponseHelper;
-
-use Setting;
-use App\User;
-use App\Restaurant;
-use App\Dish;
-use App\DishCategory;
 use App\Coupon;
+use App\Dish;
+use App\Http\Controllers\Controller;
+use App\Notification;
 use App\Order;
+use App\OrderDeliveryAssign;
 use App\OrderDish;
 use App\OrderDishAddon;
-use App\OrderDeliveryAssign;
-use App\Notification;
+use App\Restaurant;
+use App\Traits\ResponseHelper;
+use App\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Razorpay\Api\Api;
+use Setting;
 
 class OrderController extends Controller
 {
     use ResponseHelper;
 
-    
     public function orders()
     {
         $user = Auth::user();
-        $orders = Order::with(['order_dishes','order_dishes.order_adddons'])->where('user_id', $user->id)->latest()->get();
+        $orders = Order::with(['order_dishes', 'order_dishes.order_adddons'])->where('user_id', $user->id)->latest()->get();
 
         // $orders = Order::whereHas('order_dishes', function ($query) use ($restaurants_ids) {
         //     $query->whereIn('restaurant_id', $restaurants_ids)->where('active', 1);
@@ -45,11 +40,11 @@ class OrderController extends Controller
         $order = new Order();
 
         $random = Str::of(Str::orderedUuid())->upper()->explode('-');
-        $order->unique_id = '#'. date('m-d') . '-'. $random[0]. '-'. $random[1];
+        $order->unique_id = '#' . date('m-d') . '-' . $random[0] . '-' . $random[1];
 
         $restaurant_id = $request->restaurant_id;
         $order->restaurant_id = $restaurant_id;
-        
+
         $user = Auth::user();
         $order->user_id = $user->id;
 
@@ -67,13 +62,15 @@ class OrderController extends Controller
             $dish = Dish::where('id', $order_dish->id)->first();
 
             $addons_cost = 0;
-            foreach($order_dish->addons_dish as $addons_dish){
+            foreach ($order_dish->addons_dish as $addons_dish) {
                 $addons_dish = (object) $addons_dish;
-                foreach($addons_dish->addons as $d)
-                    $addons_cost += (int)$d['price'];
+                foreach ($addons_dish->addons as $d) {
+                    $addons_cost += (int) $d['price'];
+                }
+
             }
 
-            $orderTotal += ($dish->amount() * $order_dish->count)+ $addons_cost;
+            $orderTotal += ($dish->amount() * $order_dish->count) + $addons_cost;
         }
 
         if (Setting::get('delivery_charge_applicable')) {
@@ -83,7 +80,7 @@ class OrderController extends Controller
             $order->delivery_charge = 0;
         }
 
-        $orderTotal = $orderTotal + $restaurant->restaurant_charges;        
+        $orderTotal = $orderTotal + $restaurant->restaurant_charges;
 
         if ($request->coupon) {
             $coupon_code = $request->coupon['coupon_code'];
@@ -99,7 +96,7 @@ class OrderController extends Controller
                 $orderTotal = $orderTotal - $coupon_discount_amount;
 
                 $order->coupon_discount = $coupon_discount_amount;
-                
+
                 $coupon->max_usage = $coupon->max_usage - 1;
                 $coupon->save();
             }
@@ -111,7 +108,6 @@ class OrderController extends Controller
 
             $orderTotal += $tax_amount;
         }
-        
 
         $order->total_charges = $order->restaurant_charges + $order->delivery_charge + $order->tax;
 
@@ -121,20 +117,24 @@ class OrderController extends Controller
         $order->save();
 
         foreach ($request->dishes as $order_dish) {
+
             $order_dish = (object) $order_dish;
+            $dish = Dish::where('id', $order_dish->id)->first();
             $orderDish = new OrderDish();
             $orderDish->order_id = $order->id;
             $orderDish->dish_id = $order_dish->id;
             $orderDish->name = $order_dish->name;
+            $orderDish->image = $dish->image;
+            $orderDish->description = $dish->description;
             $orderDish->quantity = $order_dish->count;
             $orderDish->price = $order_dish->price;
             $orderDish->is_veg = $order_dish->is_veg;
             $orderDish->save();
 
             $addons_cost = 0;
-            foreach($order_dish->addons_dish as $addons_dish){
+            foreach ($order_dish->addons_dish as $addons_dish) {
                 $addons_dish = (object) $addons_dish;
-                foreach($addons_dish->addons as $d){
+                foreach ($addons_dish->addons as $d) {
 
                     $d = (object) $d;
 
@@ -151,16 +151,15 @@ class OrderController extends Controller
                 }
             }
 
-            
         }
 
         Notification::create([
-            'message' => 'Your order '.$order->unique_id.' is placed successfully',
-            'user_id' => $order->user_id
+            'message' => 'Your order ' . $order->unique_id . ' is placed successfully',
+            'user_id' => $order->user_id,
         ]);
 
         OrderDeliveryAssign::create([
-            'order_id' => $order->id
+            'order_id' => $order->id,
         ]);
 
         return $this->successResponse($order);

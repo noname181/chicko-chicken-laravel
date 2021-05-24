@@ -26,6 +26,9 @@ Route::get('/restaurants/all_dishes', 'API\RestaurantController@all_dishes');
 Route::get('/restaurants/all_cities', 'API\RestaurantController@all_cities');
 Route::get('/settings/map', 'API\AuthController@map_settings');
 Route::middleware(['auth:sanctum', 'role:Customer'])->group(function () {
+    Route::get('/category/{id}', 'API\RestaurantController@category');
+    Route::get('/categories', 'API\RestaurantController@all_categories');
+
     Route::get('/restaurants/nearby', 'API\RestaurantController@nearby_restaurants');
 
     Route::get('/top_categories/{id}', 'API\RestaurantController@top_categories')->where('id', '[0-9]+');

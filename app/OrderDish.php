@@ -13,6 +13,6 @@ class OrderDish extends Model
 
     public function order_adddons()
     {
-        return $this->hasMany('App\OrderDishAddon','order_dishes_id');
+        return $this->hasMany('App\OrderDishAddon', 'order_dishes_id');
     }
 }

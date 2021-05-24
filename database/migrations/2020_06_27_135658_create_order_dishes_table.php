@@ -16,6 +16,8 @@ class CreateOrderDishesTable extends Migration
         Schema::create('order_dishes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('image');
+            $table->string('description');
             $table->smallInteger('quantity');
             $table->decimal('price');
             $table->boolean('is_veg');
