@@ -40,8 +40,8 @@ class OrderController extends Controller
         $order = new Order();
 
         $random = Str::of(Str::orderedUuid())->upper()->explode('-');
-        $order->unique_id = '#' . date('m-d') . '-' . $random[0] . '-' . $random[1];
-
+        // $order->unique_id = '#' . date('m-d') . '-' . $random[0] . '-' . $random[1];
+        $order->unique_id = '#' . date('md') . '' . $random[0];
         $restaurant_id = $request->restaurant_id;
         $order->restaurant_id = $restaurant_id;
         $order->tip = $request->tip;
