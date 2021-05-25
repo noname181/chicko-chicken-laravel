@@ -44,7 +44,7 @@ class OrderController extends Controller
 
         $restaurant_id = $request->restaurant_id;
         $order->restaurant_id = $restaurant_id;
-
+        $order->tip = $request->tip;
         $user = Auth::user();
         $order->user_id = $user->id;
 
@@ -108,8 +108,8 @@ class OrderController extends Controller
 
             $orderTotal += $tax_amount;
         }
-
-        $order->total_charges = $order->restaurant_charges + $order->delivery_charge + $order->tax;
+        $orderTotal += $request->tip;
+        $order->total_charges = $order->restaurant_charges + $order->delivery_charge + $order->tax + $order->tip;
 
         $order->total = $orderTotal;
         $order->payment_mode = $request->method;
