@@ -62,7 +62,7 @@ class RestaurantController extends Controller
         $all = new Collection();
 
         foreach ($restaurants as $restaurant) {
-            $distance = $this->vincentyGreatCircleDistance($request->lat, $request->long, $restaurant->lat, $restaurant->long);
+            $distance = $this->vincentyGreatCircleDistance($request->lat, $request->long, $restaurant->addresses[0]->latitude, $restaurant->addresses[0]->longitude);
             // return $distance <= $restaurant->delivery_radius;
 
             $restaurant->distance = $distance;
