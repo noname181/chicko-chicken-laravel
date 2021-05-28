@@ -32,7 +32,7 @@
 					@include('errors.errors-forms')
 					<x-form-elements name="name" type="text" label="Addon Category Name" value="{{old('name')}}"
 						required />
-					
+
 					<div class="form-group row">
 						<label for="type" class="col-sm-3 col-form-label">Type<span class="text-danger">*</span>
 						</label>
@@ -78,10 +78,10 @@
 	$(".custom-file-input").change(function() {
 		var _this = $(this);
 		if (this.files && this.files[0]) {
-			var reader = new FileReader();			
+			var reader = new FileReader();
 			reader.onload = function(e) {
 				_this.parent().parent().find('.img-preview').attr('src', e.target.result);
-			}			
+			}
 			reader.readAsDataURL(this.files[0]);
 		}
 	});

@@ -20,11 +20,12 @@ class CreateCouponsTable extends Migration
             $table->string('coupon_code')->unique();
             $table->enum('discount_type', ['PERCENTAGE', 'FIXED']);
             $table->integer('discount');
+            $table->decimal('price');
             $table->date('expiry_date');
             $table->boolean('max_usage')->nullable();
             $table->boolean('active');
             $table->timestamps();
-            
+
             $table->foreignId('restaurant_id')->nullable()->constrained();
         });
     }

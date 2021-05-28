@@ -64,7 +64,7 @@
 							@endforeach
 						</select>
 					</div>
-					
+
 					<x-form-elements name="price" type="text" subtype="number" label="Price"
 						value="{{old('price',$dish->price)}}" required />
 
@@ -114,11 +114,11 @@
 	$(".custom-file-input").change(function() {
 		var _this = $(this);
 		if (this.files && this.files[0]) {
-			var reader = new FileReader();			
+			var reader = new FileReader();
 			reader.onload = function(e) {
 				console.log(_this.parent().parent().find('.img-preview'));
 				_this.parent().parent().find('.img-preview').attr('src', e.target.result);
-			}			
+			}
 			reader.readAsDataURL(this.files[0]);
 		}
 	});

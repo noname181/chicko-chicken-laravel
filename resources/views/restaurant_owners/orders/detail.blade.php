@@ -114,7 +114,7 @@
 											<tr>
 												<td>{{$order_dishes->name}} <br>
 													@if (count($order_dishes->order_adddons) > 0)
-														Addons: 
+														Addons:
 														@foreach ($order_dishes->order_adddons as $order_adddons)
 															{{ $order_adddons->name . '-' . Setting::get('currency_symbol').($order_adddons->price)}},
 															@php $addons+=(int)$order_adddons->price @endphp
@@ -261,7 +261,7 @@
 
 <script>
 	$(function () {
-    
+
 	$('.select2').select2({
 		theme: 'bootstrap4',
 		placeholder: {

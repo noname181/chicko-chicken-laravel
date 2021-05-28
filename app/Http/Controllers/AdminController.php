@@ -2,36 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-
-use App\Http\Requests\UserRequest;
-use App\Http\Requests\RestaurantRequest;
-use App\Http\Requests\DishRequest;
-use App\Http\Requests\AddonRequest;
-use App\Http\Requests\CouponRequest;
-
-use Carbon\Carbon;
-use Spatie\Permission\Models\Role;
-
-use App\Traits\Utility;
-
-use Auth;
-use Image;
-use Setting;
-
-use App\User;
-use App\Restaurant;
+use App\Addon;
+use App\AddonDish;
+use App\AddonsCategory;
+use App\Coupon;
 use App\Dish;
 use App\DishCategory;
-use App\AddonDish;
-use App\Addon;
-use App\AddonsCategory;
-use App\Order;
-use App\OrderDeliveryAssign;
-use App\Coupon;
+use App\Http\Requests\AddonRequest;
+use App\Http\Requests\CouponRequest;
+use App\Http\Requests\DishRequest;
+use App\Http\Requests\RestaurantRequest;
+use App\Http\Requests\UserRequest;
 use App\Notification;
+use App\Order;
+use App\Restaurant;
+use App\Traits\Utility;
+use App\User;
+use Auth;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Image;
+use Setting;
+use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
@@ -49,10 +43,10 @@ class AdminController extends Controller
         $users = $last_seven_days_orders->sortBy('created_at')->groupBy(function ($item) {
             return $item->created_at->format('d');
         });
-        
+
         $seven_days_record = [];
         $last_seven_days_orders_count = 0;
-        
+
         for ($i = 0; $i < 7; $i += 1) {
             $key = Carbon::today()->subDays($i)->format('d');
             if (isset($users[$key])) {
@@ -80,8 +74,8 @@ class AdminController extends Controller
 
     public function order_detail($id)
     {
-        $order = Order::with('restaurant', 'user', 'order_dishes','order_dishes.order_adddons','order_delivery_assign')->where('id', $id)->first();
-        
+        $order = Order::with('restaurant', 'user', 'order_dishes', 'order_dishes.order_adddons', 'order_delivery_assign')->where('id', $id)->first();
+
         $orderStatus = ['ORDER PLACED', 'ORDER ACCEPTED', 'ORDER PREPARED', 'On the Way', 'Delivered'];
         $paymentStatus = ['NOT_PAID', 'PAID', 'YET_TO_BE_PAID'];
         $delivery_scout = User::role('Delivery Scout')->get();
@@ -92,56 +86,55 @@ class AdminController extends Controller
     {
         // dd($request->all());
         $order = Order::with('order_delivery_assign')->where('id', $id)->first();
-        
+
         if ($order) {
             if ($order->status != $request->order_status) {
                 $order->status = $request->order_status;
-                
+
                 $message;
                 switch ($request->order_status) {
                     case 'ORDER ACCEPTED':
-                        $message = 'Your order '.$order->unique_id.' is Accepted';
+                        $message = 'Your order ' . $order->unique_id . ' is Accepted';
                         break;
                     case 'ORDER PREPARED':
-                        $message = 'Your order '.$order->unique_id.' is prepared and ready for pickup.';
+                        $message = 'Your order ' . $order->unique_id . ' is prepared and ready for pickup.';
                         break;
                     case 'On the Way':
-                        $message = 'Your order '.$order->unique_id.' is on the way. Be ready';
+                        $message = 'Your order ' . $order->unique_id . ' is on the way. Be ready';
                         break;
                     case 'Delivered':
-                        $message = 'Your order '.$order->unique_id.' is delivered successfully';
+                        $message = 'Your order ' . $order->unique_id . ' is delivered successfully';
 
                 }
                 Notification::create([
                     'message' => $message,
-                    'user_id' => $order->user_id
+                    'user_id' => $order->user_id,
                 ]);
                 $this->sendFCM($message, $order->user_id);
             }
 
-
             if ($request->delivery_user_id != null) {
                 if ($order->order_delivery_assign->user_id != $request->delivery_user_id) {
-                    $message = 'Your order '.$order->unique_id.' will be delivered by '.$order->user->name;
+                    $message = 'Your order ' . $order->unique_id . ' will be delivered by ' . $order->user->name;
                     Notification::create([
                         'message' => $message,
-                        'user_id' => $order->user_id
+                        'user_id' => $order->user_id,
                     ]);
 
                     $this->sendFCM($message, $order->user_id);
-                    
-                    $message = 'You\'re assigned to a new order '.$order->unique_id;
+
+                    $message = 'You\'re assigned to a new order ' . $order->unique_id;
                     Notification::create([
                         'message' => $message,
-                        'user_id' => $request->delivery_user_id
+                        'user_id' => $request->delivery_user_id,
                     ]);
                     $this->sendFCM($message, $request->delivery_user_id);
                 }
 
                 $order->order_delivery_assign()
-                        ->update([
-                            'user_id'=> $request->delivery_user_id
-                        ]);
+                    ->update([
+                        'user_id' => $request->delivery_user_id,
+                    ]);
             }
 
             try {
@@ -171,7 +164,7 @@ class AdminController extends Controller
         $addresses = $restaurant->addresses->first();
         $owners = User::role('Restaurant Owner')->get();
         $dishes = Dish::where('restaurant_id', $id)->with(['dish_category'])->latest()->get();
-        
+
         return view('admin.restaurants.edit')->withRestaurant($restaurant)->withOwners($owners)->withAddresses($addresses)->withDishes($dishes);
     }
 
@@ -190,8 +183,8 @@ class AdminController extends Controller
             // $constraint->upsize();
         })->encode('jpg', 80);
 
-        Storage::disk('public')->put(config('path.restaurant').$filename, $photo);
-            
+        Storage::disk('public')->put(config('path.restaurant') . $filename, $photo);
+
         $restaurant->image = $filename;
 
         $restaurant->phone = $request->phone;
@@ -205,7 +198,7 @@ class AdminController extends Controller
 
         $restaurant->restaurant_charges = $request->restaurant_charges;
         $restaurant->commission_rate = $request->commission_rate;
-        
+
         if ($request->delivery_radius != null) {
             $restaurant->delivery_radius = $request->delivery_radius;
         }
@@ -254,47 +247,47 @@ class AdminController extends Controller
     public function update_restaurant($id, RestaurantRequest $request)
     {
         $restaurant = Restaurant::where('id', $id)->first();
-        
+
         if ($restaurant) {
             $restaurant->name = $request->name;
             $restaurant->description = $request->description;
-    
+
             if ($request->image != null) {
                 $image = $request->file('image');
                 $rand_name = time() . Str::random(12);
                 $filename = $rand_name . '.jpg';
-        
+
                 $photo = Image::make($image)->fit(600, 360, function ($constraint) {
                     // $constraint->upsize();
                 })->encode('jpg', 80);
-    
-                Storage::disk('public')->put(config('path.restaurant').$filename, $photo);
-                
+
+                Storage::disk('public')->put(config('path.restaurant') . $filename, $photo);
+
                 $restaurant->image = $filename;
             }
 
             $restaurant->phone = $request->phone;
             $restaurant->email = $request->email;
-    
+
             $restaurant->rating = $request->rating;
             $restaurant->delivery_time = $request->delivery_time;
             $restaurant->for_two = $request->for_two;
-    
+
             $restaurant->license_code = $request->license_code;
-    
+
             $restaurant->restaurant_charges = $request->restaurant_charges;
             $restaurant->commission_rate = $request->commission_rate;
-            
+
             if ($request->delivery_radius != null) {
                 $restaurant->delivery_radius = $request->delivery_radius;
             }
-    
+
             if ($request->is_veg == 'on') {
                 $restaurant->is_veg = true;
             } else {
                 $restaurant->is_veg = false;
             }
-    
+
             if ($request->featured == 'on') {
                 $restaurant->featured = true;
             } else {
@@ -306,9 +299,9 @@ class AdminController extends Controller
             } else {
                 $restaurant->active = false;
             }
-    
+
             $restaurant->user_id = $request->user_id;
-    
+
             try {
                 $restaurant->save();
 
@@ -325,7 +318,7 @@ class AdminController extends Controller
                     'is_billing' => true,
                     'is_shipping' => true,
                 ]);
-    
+
                 $restaurant->save();
                 return redirect()->back()->with(['success' => 'Updated Successfully!']);
             } catch (Exception $e) {
@@ -336,7 +329,7 @@ class AdminController extends Controller
 
     public function dishes()
     {
-        $dishes = Dish::with(['restaurant','dish_category'])->get()->sortByDesc('id');
+        $dishes = Dish::with(['restaurant', 'dish_category'])->get()->sortByDesc('id');
         return view('admin.dishes.index')->withDishes($dishes);
     }
 
@@ -376,13 +369,13 @@ class AdminController extends Controller
             $image = $request->file('image');
             $rand_name = time() . Str::random(12);
             $filename = $rand_name . '.jpg';
-    
+
             $photo = Image::make($image)->fit(400, 350, function ($constraint) {
                 // $constraint->upsize();
             })->encode('jpg', 80);
 
-            Storage::disk('public')->put(config('path.dishes').$filename, $photo);
-            
+            Storage::disk('public')->put(config('path.dishes') . $filename, $photo);
+
             $dish->image = $filename;
         }
 
@@ -406,7 +399,7 @@ class AdminController extends Controller
 
         try {
             $dish->save();
-            
+
             foreach ($request->addon_id as $addon_id) {
                 $dish_addon = new AddonDish();
                 $dish_addon->addons_category_id = $addon_id;
@@ -423,7 +416,7 @@ class AdminController extends Controller
     public function update_dish($id, DishRequest $request)
     {
         $dish = Dish::where('id', $id)->first();
-        
+
         if ($dish) {
             $dish->name = $request->name;
             $dish->description = $request->description;
@@ -437,13 +430,13 @@ class AdminController extends Controller
                 $image = $request->file('image');
                 $rand_name = time() . Str::random(12);
                 $filename = $rand_name . '.jpg';
-    
+
                 $photo = Image::make($image)->fit(400, 350, function ($constraint) {
                     // $constraint->upsize();
                 })->encode('jpg', 80);
 
-                Storage::disk('public')->put(config('path.dishes').$filename, $photo);
-            
+                Storage::disk('public')->put(config('path.dishes') . $filename, $photo);
+
                 $dish->image = $filename;
             }
 
@@ -467,10 +460,10 @@ class AdminController extends Controller
 
             try {
                 $dish->save();
-                
-                AddonDish::where('dish_id',$dish->id)->whereNotIn('addons_category_id', $request->addon_id ?? [])->delete();
-                
-                if(isset($request->addon_id)){
+
+                AddonDish::where('dish_id', $dish->id)->whereNotIn('addons_category_id', $request->addon_id ?? [])->delete();
+
+                if (isset($request->addon_id)) {
                     // Create new which is added now
                     foreach ($request->addon_id as $addon_id) {
                         AddonDish::updateOrCreate(
@@ -507,7 +500,7 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg'
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg',
         ]);
 
         $category = new DishCategory();
@@ -517,11 +510,11 @@ class AdminController extends Controller
             $image = $request->file('image');
             $rand_name = time() . Str::random(12);
             $filename = $rand_name . '.jpg';
-    
+
             $photo = Image::make($image)->fit(200, 200)->encode('jpg', 80);
 
-            Storage::disk('public')->put(config('path.categories').$filename, $photo);
-            
+            Storage::disk('public')->put(config('path.categories') . $filename, $photo);
+
             $category->image = $filename;
         }
 
@@ -543,11 +536,11 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|max:255',
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg'
+            'image' => 'image|mimes:jpeg,png,jpg,gif,svg',
         ]);
 
         $category = DishCategory::where('id', $id)->first();
-        
+
         if ($category) {
             $category->name = $request->name;
 
@@ -555,11 +548,11 @@ class AdminController extends Controller
                 $image = $request->file('image');
                 $rand_name = time() . Str::random(12);
                 $filename = $rand_name . '.jpg';
-    
+
                 $photo = Image::make($image)->fit(200, 200)->encode('jpg', 80);
 
-                Storage::disk('public')->put(config('path.categories').$filename, $photo);
-            
+                Storage::disk('public')->put(config('path.categories') . $filename, $photo);
+
                 $category->image = $filename;
             }
 
@@ -568,7 +561,7 @@ class AdminController extends Controller
             } else {
                 $category->active = false;
             }
-        
+
             try {
                 $category->save();
                 return redirect('admin/dish_categories')->with(['success' => 'Saved Successfully!']);
@@ -606,7 +599,7 @@ class AdminController extends Controller
         $addon->name = $request->name;
         $addon->price = $request->price;
         $addon->addons_category_id = $request->addons_category_id;
-        $addon->user_id = Auth::user()->id;        
+        $addon->user_id = Auth::user()->id;
         $addon->active = true;
 
         try {
@@ -620,7 +613,7 @@ class AdminController extends Controller
     public function update_addon($id, AddonRequest $request)
     {
         $addon = Addon::where('id', $id)->first();
-        
+
         if ($addon) {
             $addon->name = $request->name;
             $addon->price = $request->price;
@@ -656,7 +649,7 @@ class AdminController extends Controller
 
     public function edit_addons_category($id)
     {
-        $addon = AddonsCategory::where([['id', $id],['user_id', Auth::user()->id]])->first();
+        $addon = AddonsCategory::where([['id', $id], ['user_id', Auth::user()->id]])->first();
         $types = ['SINGLE', 'MULTIPLE'];
 
         return view('admin.addons_category.edit')->withAddon($addon)->withTypes($types);
@@ -690,7 +683,7 @@ class AdminController extends Controller
         ]);
 
         $addon = AddonsCategory::where('id', $id)->first();
-        
+
         if ($addon) {
             $addon->name = $request->name;
             $addon->type = $request->type;
@@ -715,17 +708,17 @@ class AdminController extends Controller
         $restaurants = Restaurant::all()->sortByDesc('id');
         $restaurants->prepend((object) array(
             'name' => 'All Restaurants',
-            'id' => '0'
+            'id' => '0',
         ));
 
         $discount_type = array(
             (object) array(
                 'name' => 'Fixed Amount Discount',
-                'id' => 'FIXED'
+                'id' => 'FIXED',
             ),
             (object) array(
                 'name' => 'Percentage Discount',
-                'id' => 'PERCENTAGE'
+                'id' => 'PERCENTAGE',
             ),
         );
 
@@ -739,17 +732,17 @@ class AdminController extends Controller
         $restaurants = Restaurant::all()->sortByDesc('id');
         $restaurants->prepend((object) array(
             'name' => 'All Restaurants',
-            'id' => '0'
+            'id' => '0',
         ));
 
         $discount_type = array(
             (object) array(
                 'name' => 'Fixed Amount Discount',
-                'id' => 'FIXED'
+                'id' => 'FIXED',
             ),
             (object) array(
                 'name' => 'Percentage Discount',
-                'id' => 'PERCENTAGE'
+                'id' => 'PERCENTAGE',
             ),
         );
 
@@ -765,6 +758,7 @@ class AdminController extends Controller
         $coupon->coupon_code = $request->coupon_code;
         $coupon->discount_type = $request->discount_type;
         $coupon->discount = $request->discount;
+        $coupon->price = $request->price;
         $coupon->expiry_date = Carbon::parse($request->expiry_date)->format('Y-m-d');
         $coupon->max_usage = $request->max_usage;
 
@@ -787,13 +781,14 @@ class AdminController extends Controller
     public function update_coupon($id, CouponRequest $request)
     {
         $coupon = Coupon::where('id', $id)->first();
-        
+
         if ($coupon) {
             $coupon->name = $request->name;
             $coupon->description = $request->description;
             $coupon->coupon_code = $request->coupon_code;
             $coupon->discount_type = $request->discount_type;
             $coupon->discount = $request->discount;
+            $coupon->price = $request->price;
             $coupon->expiry_date = Carbon::parse($request->expiry_date)->format('Y-m-d');
             $coupon->max_usage = $request->max_usage;
 
@@ -825,7 +820,7 @@ class AdminController extends Controller
         } else {
             return redirect()->back();
         }
-        
+
         $users = User::role($role)->get();
         return view('admin.users.index')->withUsers($users)->withRole($role);
     }
@@ -864,12 +859,12 @@ class AdminController extends Controller
                 $image = $request->file('avatar');
                 $rand_name = time() . Str::random(12);
                 $filename = $rand_name . '.jpg';
-        
+
                 $photo = Image::make($image)->fit(300, 300, function ($constraint) {
                     // $constraint->upsize();
                 })->encode('jpg', 80);
-    
-                Storage::disk('public')->put(config('path.avatar').$filename, $photo);
+
+                Storage::disk('public')->put(config('path.avatar') . $filename, $photo);
                 $user->avatar = $filename;
                 $user->save();
             }
@@ -881,7 +876,7 @@ class AdminController extends Controller
                 $redirect = 'delivery';
             }
 
-            return redirect('admin/users/'.$redirect);
+            return redirect('admin/users/' . $redirect);
         } catch (Exception $e) {
             return redirect()->back()->with(['message' => $e->getMessage()]);
         }
@@ -890,7 +885,7 @@ class AdminController extends Controller
     public function update_user($id, UserRequest $request)
     {
         $user = User::where('id', $id)->first();
-        
+
         if ($user) {
             $user->name = $request->name;
             $user->email = $request->email;
@@ -900,19 +895,19 @@ class AdminController extends Controller
                 $image = $request->file('avatar');
                 $rand_name = time() . Str::random(12);
                 $filename = $rand_name . '.jpg';
-    
+
                 $photo = Image::make($image)->fit(200, 200)->encode('jpg', 80);
 
-                Storage::disk('public')->put(config('path.avatar').$filename, $photo);
-            
+                Storage::disk('public')->put(config('path.avatar') . $filename, $photo);
+
                 $user->avatar = $filename;
             }
             $role = Role::findById($request->role)->name;
             $user->assignRole($role);
-        
+
             try {
                 $user->save();
-                return redirect('admin/users/'.$id.'/edit')->with(['success' => 'Updated Successfully!']);
+                return redirect('admin/users/' . $id . '/edit')->with(['success' => 'Updated Successfully!']);
             } catch (Exception $e) {
                 return redirect()->back()->with(['message' => $e->getMessage()]);
             }
@@ -931,16 +926,16 @@ class AdminController extends Controller
         $req = $request->all();
         unset($req["_token"]);
         unset($req["_method"]);
-        
-        if (in_array($req["setting_tab"], ["general","fcm","sms_gateway","payment_gateway"])) {
+
+        if (in_array($req["setting_tab"], ["general", "fcm", "sms_gateway", "payment_gateway"])) {
             if ($req["setting_tab"] == "general") {
-                $radio_options = ["tax_applicable","delivery_charge_applicable"];
+                $radio_options = ["tax_applicable", "delivery_charge_applicable"];
             } elseif ($req["setting_tab"] == "fcm") {
                 $radio_options = ["fcm_active"];
             } elseif ($req["setting_tab"] == "sms_gateway") {
                 $radio_options = ["verification_required"];
             } elseif ($req["setting_tab"] == "payment_gateway") {
-                $radio_options = ["pg_paypal_active","pg_razorpay_active","pg_cod_active"];
+                $radio_options = ["pg_paypal_active", "pg_razorpay_active", "pg_cod_active"];
             }
             foreach ($radio_options as $value) {
                 if (array_key_exists($value, $req)) {
@@ -955,7 +950,7 @@ class AdminController extends Controller
         unset($req["setting_tab"]);
 
         foreach ($req as $key => $value) {
-            Setting::set($key, $value == null ? '':$value);
+            Setting::set($key, $value == null ? '' : $value);
         }
 
         try {
@@ -971,7 +966,7 @@ class AdminController extends Controller
         $users = User::all()->sortByDesc("id");
         $users->prepend((object) array(
             'name' => 'All Users',
-            'id' => '0'
+            'id' => '0',
         ));
 
         return view('admin.utilities.push_notification')->withUsers($users);
@@ -990,7 +985,7 @@ class AdminController extends Controller
         } else {
             $users = User::whereIn('id', $request->user_id)->get()->pluck('fcm_token')->toArray();
         }
-    
+
         try {
             $this->sendFCM($request->message, $users, $request->title, true);
             return redirect()->back()->with(['success' => 'Sent Successfully!']);

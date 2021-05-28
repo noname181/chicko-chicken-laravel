@@ -236,4 +236,12 @@ class RestaurantController extends Controller
             return $this->errorResponse($e->getMessage(), 404);
         }
     }
+
+    public function all_coupons()
+    {
+
+        $coupons = Coupon::all();
+        return $this->successResponse($coupons);
+
+    }
 }

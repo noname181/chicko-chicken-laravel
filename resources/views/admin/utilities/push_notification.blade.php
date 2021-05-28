@@ -34,7 +34,7 @@
 					<div class="alert alert-success">
 						{!! \Session::get('success') !!}
 					</div>
-					@endif					
+					@endif
 
 					<x-form-elements name="user_id[]" multiple type="select2" label="Select Users"
 						value="{{old('user_id[]')}}" :options="$users" required />
@@ -81,11 +81,11 @@
 	$(".custom-file-input").change(function() {
 		var _this = $(this);
 		if (this.files && this.files[0]) {
-			var reader = new FileReader();			
+			var reader = new FileReader();
 			reader.onload = function(e) {
 				console.log(_this.parent().parent().find('.img-preview'));
 				_this.parent().parent().find('.img-preview').attr('src', e.target.result);
-			}			
+			}
 			reader.readAsDataURL(this.files[0]);
 		}
 	});

@@ -17,60 +17,64 @@
 @section('content')
 <!-- Small boxes (Stat box) -->
 <div class="row">
-	<div class="col-12">
-		<!-- jquery validation -->
-		<div class="card card-primary">
-			<div class="card-header">
-				<h3 class="card-title">Edit Coupon</h3>
-			</div>
-			<!-- /.card-header -->
-			<!-- form start -->
-			<form role="form" id="createForm" method="POST" action="{{url('/admin/coupons/'.$coupon->id.'/update')}}"
-				enctype="multipart/form-data">
-				@csrf
-				@method('PUT')
-				<div class="card-body">
-					@include('errors.errors-forms')
-					@if (\Session::has('success'))
-					<div class="alert alert-success">
-						{!! \Session::get('success') !!}
-					</div>
-					@endif
-					<x-form-elements name="name" type="text" label="Coupon Name" value="{{old('name',$coupon->name)}}" required />
+    <div class="col-12">
+        <!-- jquery validation -->
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Edit Coupon</h3>
+            </div>
+            <!-- /.card-header -->
+            <!-- form start -->
+            <form role="form" id="createForm" method="POST" action="{{url('/admin/coupons/'.$coupon->id.'/update')}}"
+                enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <div class="card-body">
+                    @include('errors.errors-forms')
+                    @if (\Session::has('success'))
+                    <div class="alert alert-success">
+                        {!! \Session::get('success') !!}
+                    </div>
+                    @endif
+                    <x-form-elements name="name" type="text" label="Coupon Name" value="{{old('name',$coupon->name)}}"
+                        required />
 
-					<x-form-elements name="description" type="text" label="Coupon Description"
-						value="{{old('description',$coupon->description)}}" required />
+                    <x-form-elements name="description" type="text" label="Coupon Description"
+                        value="{{old('description',$coupon->description)}}" required />
 
-					<x-form-elements name="restaurant_id" type="select2" label="Restaurant"
-						value="{{old('restaurant_id',$coupon->restaurant_id)}}" :options="$restaurants" required />
+                    <x-form-elements name="restaurant_id" type="select2" label="Restaurant"
+                        value="{{old('restaurant_id',$coupon->restaurant_id)}}" :options="$restaurants" required />
 
-					<x-form-elements name="coupon_code" type="text" label="Coupon Code" value="{{old('coupon_code',$coupon->coupon_code)}}"
-						required />
+                    <x-form-elements name="coupon_code" type="text" label="Coupon Code"
+                        value="{{old('coupon_code',$coupon->coupon_code)}}" required />
 
-					<x-form-elements name="discount_type" type="select2" label="Discount Type"
-						value="{{old('discount_type',$coupon->discount_type)}}" :options="$discountType" required />
+                    <x-form-elements name="discount_type" type="select2" label="Discount Type"
+                        value="{{old('discount_type',$coupon->discount_type)}}" :options="$discountType" required />
 
-					<x-form-elements name="discount" type="text" subtype="number" label="Dicount"
-						value="{{old('discount',$coupon->discount)}}" required />
+                    <x-form-elements name="discount" type="text" subtype="number" label="Dicount"
+                        value="{{old('discount',$coupon->discount)}}" required />
+                    <x-form-elements name="price" type="text" subtype="number" label="Price"
+                        value="{{old('price', $coupon->price)}}" required />
 
-					<x-form-elements name="expire_date" type="datepicker" label="Expiry Date"
-						value="{{old('expire_date',$coupon->expiry_date)}}" required />
+                    <x-form-elements name="expire_date" type="datepicker" label="Expiry Date"
+                        value="{{old('expire_date',$coupon->expiry_date)}}" required />
 
-					<x-form-elements name="max_usage" type="text" subtype="number" label="Max. usage"
-						value="{{old('max_usage',$coupon->max_usage)}}" />
+                    <x-form-elements name="max_usage" type="text" subtype="number" label="Max. usage"
+                        value="{{old('max_usage',$coupon->max_usage)}}" />
 
-					<x-form-elements name="active" checked type="switch" label="Active" value="{{old('active',$coupon->active)}}" />
+                    <x-form-elements name="active" checked type="switch" label="Active"
+                        value="{{old('active',$coupon->active)}}" />
 
 
-				</div>
-				<!-- /.card-body -->
-				<div class="card-footer">
-					<button type="submit" class="btn btn-primary">Submit</button>
-				</div>
-			</form>
-		</div>
-		<!-- /.card -->
-	</div>
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+        <!-- /.card -->
+    </div>
 </div>
 <!-- ./col -->
 </div>
@@ -83,30 +87,32 @@
 <script src="/vendor/inputmask/min/jquery.inputmask.bundle.min.js"></script>
 
 <script>
-	$(document).ready(function () {
+$(document).ready(function() {
 
-	$('.select2').select2({
-		theme: 'bootstrap4'
-	});
+    $('.select2').select2({
+        theme: 'bootstrap4'
+    });
 
-	$("input[data-bootstrap-switch]").each(function(){
-			$(this).bootstrapSwitch('state', $(this).prop('checked'));
-	});
+    $("input[data-bootstrap-switch]").each(function() {
+        $(this).bootstrapSwitch('state', $(this).prop('checked'));
+    });
 
-	$('#datemask').inputmask('dd/mm/yyyy', { 'placeholder': 'dd/mm/yyyy' });
-	$('[data-mask]').inputmask();
+    $('#datemask').inputmask('dd/mm/yyyy', {
+        'placeholder': 'dd/mm/yyyy'
+    });
+    $('[data-mask]').inputmask();
 
-	$(".custom-file-input").change(function() {
-		var _this = $(this);
-		if (this.files && this.files[0]) {
-			var reader = new FileReader();			
-			reader.onload = function(e) {
-				console.log(_this.parent().parent().find('.img-preview'));
-				_this.parent().parent().find('.img-preview').attr('src', e.target.result);
-			}			
-			reader.readAsDataURL(this.files[0]);
-		}
-	});
+    $(".custom-file-input").change(function() {
+        var _this = $(this);
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                console.log(_this.parent().parent().find('.img-preview'));
+                _this.parent().parent().find('.img-preview').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
 
 });
 </script>

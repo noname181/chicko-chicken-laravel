@@ -34,7 +34,7 @@
 						required />
 
 					<x-form-elements name="name" type="text" label="Full Name" value="{{old('name')}}" required />
-					
+
 					<x-form-elements name="avatar" type="file" label="Profile Image" value="{{old('avatar')}}"
 						info="File Size should be less than 2mb" accept="image/*" />
 
@@ -84,11 +84,11 @@
 	$(".custom-file-input").change(function() {
 		var _this = $(this);
 		if (this.files && this.files[0]) {
-			var reader = new FileReader();			
+			var reader = new FileReader();
 			reader.onload = function(e) {
 				console.log(_this.parent().parent().find('.img-preview'));
 				_this.parent().parent().find('.img-preview').attr('src', e.target.result);
-			}			
+			}
 			reader.readAsDataURL(this.files[0]);
 		}
 	});

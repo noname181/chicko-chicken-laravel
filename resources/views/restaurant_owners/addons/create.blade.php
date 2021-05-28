@@ -70,10 +70,10 @@
 	$(".custom-file-input").change(function() {
 		var _this = $(this);
 		if (this.files && this.files[0]) {
-			var reader = new FileReader();			
+			var reader = new FileReader();
 			reader.onload = function(e) {
 				_this.parent().parent().find('.img-preview').attr('src', e.target.result);
-			}			
+			}
 			reader.readAsDataURL(this.files[0]);
 		}
 	});

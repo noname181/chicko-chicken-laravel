@@ -20,28 +20,31 @@ Route::post('/resend_otp', 'API\AuthController@resendOTP');
 Route::post('/password/reset', 'API\AuthController@reset_password');
 
 Route::get('/settings/fcm', 'API\AuthController@fcm_settings');
-Route::get('/restaurants/nearby_latlong', 'API\RestaurantController@nearby_latlong');
-Route::get('/restaurants/all', 'API\RestaurantController@all');
-Route::get('/restaurants/all_dishes', 'API\RestaurantController@all_dishes');
-Route::get('/restaurants/all_cities', 'API\RestaurantController@all_cities');
-Route::get('/settings/map', 'API\AuthController@map_settings');
+
 Route::middleware(['auth:sanctum', 'role:Customer'])->group(function () {
-    Route::get('/category/{id}', 'API\RestaurantController@category');
-    Route::get('/categories', 'API\RestaurantController@all_categories');
 
+    Route::post('/coupon/verify', 'API\RestaurantController@coupon_verify');
+    Route::get('/coupon/all', 'API\RestaurantController@all_coupons');
+
+    Route::get('/restaurants/nearby_latlong', 'API\RestaurantController@nearby_latlong');
+    Route::get('/restaurants/all', 'API\RestaurantController@all');
+    Route::get('/restaurants/all_dishes', 'API\RestaurantController@all_dishes');
+    Route::get('/restaurants/all_cities', 'API\RestaurantController@all_cities');
+    Route::get('/restaurant/{id}', 'API\RestaurantController@restaurant')->where('id', '[0-9]+');
     Route::get('/restaurants/nearby', 'API\RestaurantController@nearby_restaurants');
-
     Route::get('/top_categories/{id}', 'API\RestaurantController@top_categories')->where('id', '[0-9]+');
     Route::post('/restaurants/search', 'API\RestaurantController@search_restaurant');
 
-    Route::get('/restaurant/{id}', 'API\RestaurantController@restaurant')->where('id', '[0-9]+');
+    Route::get('/settings/map', 'API\AuthController@map_settings');
+
+    Route::get('/category/{id}', 'API\RestaurantController@category');
+    Route::get('/categories', 'API\RestaurantController@all_categories');
+
     Route::get('/cart/{id}', 'API\RestaurantController@cart')->where('id', '[0-9]+');
 
     Route::get('/orders', 'API\OrderController@orders');
     Route::post('/order/place_order', 'API\OrderController@place_order');
     Route::post('/payment/razorpay', 'API\OrderController@process_razorpay');
-
-    Route::post('/coupon/verify', 'API\RestaurantController@coupon_verify');
 
     Route::get('/users', 'API\AuthController@users');
     Route::post('/user/fcm_token', 'API\UserController@save_token');
